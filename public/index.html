@@ -1527,6 +1527,7 @@
                 <button class="tab" onclick="filterByCategory('Kesehatan', this)">Kesehatan</button>
                 <button class="tab" onclick="filterByCategory('Kuliner', this)">Kuliner</button>
                 <button class="tab" onclick="filterByCategory('Elektronik', this)">Elektronik</button>
+                <button class="tab" onclick="filterByCategory('Barang Mewah', this)"><i class="fas fa-gem" style="margin-right:4px;color:#7C3AED;"></i>Barang Mewah</button>
                 <button class="tab" onclick="filterByCategory('Lainnya', this)">Lainnya</button>
             </div>
 
@@ -3243,6 +3244,7 @@
                     <option value="Kesehatan">Kesehatan</option>
                     <option value="Kuliner">Kuliner</option>
                     <option value="Elektronik">Elektronik</option>
+                    <option value="Barang Mewah">Barang Mewah</option>
                     <option value="Lainnya">Lainnya</option>
                 </select>
             </div>
@@ -4369,6 +4371,39 @@ if (typeof window !== 'undefined') {
         flushSGTOfflineQueue();
     });
 }
+
+// ===== KONVERSI MATA UANG: RUPIAH -> DOLAR AS (USD) =====
+// Kurs acuan (mid-market, per Agustus 2026). Bisa disesuaikan lewat window.setUsdRate().
+window.USD_IDR_RATE = parseFloat(localStorage.getItem('sagatama_usd_rate')) || 17830;
+
+window.setUsdRate = function(rate) {
+    const r = parseFloat(rate);
+    if (!r || r <= 0) return false;
+    window.USD_IDR_RATE = r;
+    try { localStorage.setItem('sagatama_usd_rate', String(r)); } catch(e) {}
+    return true;
+};
+
+// Format angka Rupiah murni, mis. "Rp 150.000"
+window.formatIDR = function(amount) {
+    return 'Rp ' + Math.round(amount || 0).toLocaleString('id-ID');
+};
+
+// Format nilai konversi Dolar murni, mis. "$8.41"
+window.formatUSD = function(amount) {
+    const usd = (amount || 0) / (window.USD_IDR_RATE || 17830);
+    return '$' + usd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+};
+
+// Untuk dipakai di dalam innerHTML template literal — Rupiah + estimasi USD dalam satu baris kecil
+window.priceWithUSD = function(amount) {
+    return formatIDR(amount) + ' <span style="font-size:0.72em;font-weight:600;color:#9CA3AF;">(~' + formatUSD(amount) + ')</span>';
+};
+
+// Untuk dipakai di elemen yang hanya menerima teks polos (innerText), mis. total pembayaran
+window.priceWithUSDText = function(amount) {
+    return formatIDR(amount) + ' (~' + formatUSD(amount) + ')';
+};
 
 // SGT_RP_UNIT = kelipatan Rupiah untuk 1x rate SGT (default: tiap Rp10.000 belanja)
 const SGT_RP_UNIT = 10000;
@@ -6518,7 +6553,7 @@ function renderProducts() {
             <div class="pc-body">
                 <span class="pc-cat-badge">${p.category || 'Lainnya'}</span>
                 <h4 class="pc-name">${p.name}</h4>
-                <p class="pc-price">Rp ${(price||0).toLocaleString('id-ID')}</p>
+                <p class="pc-price">${priceWithUSD(price||0)}</p>
                 ${!isOutOfStock ? `<span class="pc-stock-pill">Stok: ${stockNum}</span>` : ''}
                 <button onclick="event.stopPropagation(); addToCart('${p.id}')" class="pc-add-btn" ${isOutOfStock ? 'disabled' : ''} aria-label="Tambah ke keranjang">
                     <i class="fas ${isOutOfStock ? 'fa-ban' : 'fa-plus'}"></i> ${isOutOfStock ? 'Habis' : 'Tambah'}
@@ -6547,7 +6582,7 @@ function renderFeaturedProducts() {
             </div>
             <div class="pc-body">
                 <h4 class="pc-name" style="min-height:auto;-webkit-line-clamp:1;">${p.name}</h4>
-                <p class="pc-price">Rp ${(price||0).toLocaleString('id-ID')}</p>
+                <p class="pc-price">${priceWithUSD(price||0)}</p>
                 <button onclick="event.stopPropagation(); addToCart('${p.id}')" class="pc-add-btn" aria-label="Tambah ke keranjang">
                     <i class="fas fa-plus"></i> Tambah
                 </button>
@@ -6563,7 +6598,8 @@ function renderHomeCategories() {
         {name:'Herbal',icon:'🌿',color:'#10B981'},{name:'Sembako',icon:'🍚',color:'#F59E0B'},
         {name:'Literasi',icon:'📚',color:'#3B82F6'},{name:'Busana',icon:'👕',color:'#EC4899'},
         {name:'Kesehatan',icon:'💊',color:'#EF4444'},{name:'Kuliner',icon:'🍜',color:'#D4AF37'},
-        {name:'Elektronik',icon:'📱',color:'#06B6D4'},{name:'Lainnya',icon:'📦',color:'#6B7280'}
+        {name:'Elektronik',icon:'📱',color:'#06B6D4'},{name:'Barang Mewah',icon:'💎',color:'#7C3AED'},
+        {name:'Lainnya',icon:'📦',color:'#6B7280'}
     ];
     container.innerHTML = categories.map(c => `
         <div onclick="switchView('products'); setTimeout(() => filterByCategory('${c.name}'), 100)"
@@ -6741,7 +6777,7 @@ function renderCart() {
             <img src="${safeImg(item.image,'thumb')}" style="width:80px;height:80px;object-fit:cover;border-radius:12px;" onerror="onImgError(this,'thumb')">
             <div style="flex:1;">
                 <h4 style="font-weight:700;color:#1F2937;font-size:14px;margin-bottom:4px;">${item.name}</h4>
-                <p style="font-size:13px;color:#D4AF37;font-weight:700;">Rp ${(itemTotalPi||0).toLocaleString('id-ID')}</p>
+                <p style="font-size:13px;color:#D4AF37;font-weight:700;">${priceWithUSD(itemTotalPi||0)}</p>
                 ${itemSGT > 0 ? `<p style="font-size:11px;color:#D97706;font-weight:700;margin-top:2px;">+${itemSGT} SGT reward</p>` : ''}
                 <div style="display:flex;align-items:center;gap:8px;margin-top:8px;">
                     <button onclick="updateQty(${idx},-1)" style="width:28px;height:28px;border-radius:8px;border:1px solid #E5E7EB;background:white;cursor:pointer;"><i class="fas fa-minus" style="font-size:10px;"></i></button>
@@ -6764,7 +6800,7 @@ function updateCartSummary() {
     const totalEl = document.getElementById('cartTotalPi');
     const countEl = document.getElementById('cartItemCount');
     const sgtEl = document.getElementById('sgtRewardPreview');
-    if (totalEl) totalEl.innerText = 'Rp ' + (totalPi||0).toLocaleString('id-ID');
+    if (totalEl) totalEl.innerText = priceWithUSDText(totalPi||0);
     if (countEl) countEl.innerText = itemCount + ' item';
     if (sgtEl) sgtEl.innerText = '+' + totalSGT + ' SGT';
 }
@@ -7590,7 +7626,7 @@ window.openPayment = function() {
     if (proofWrap) proofWrap.style.display = 'none';
     paymentProofDataUrl = null;
 
-    if (amountEl) amountEl.innerText = 'Rp ' + (totalAmount||0).toLocaleString('id-ID');
+    if (amountEl) amountEl.innerText = priceWithUSDText(totalAmount||0);
     if (sgtEl) sgtEl.innerText = '+' + sgtReward + ' SGT';
     if (bankInfoEl) {
         bankInfoEl.innerHTML = `<p><strong>Bank ${BANK_INFO.bankName}</strong> — ${BANK_INFO.accountNumber}<br>a.n. ${BANK_INFO.accountHolder}</p>`;
@@ -7603,7 +7639,7 @@ window.openPayment = function() {
                     <span style="font-size:13px;color:#374151;">${item.name}</span>
                     <span style="font-size:11px;color:#9CA3AF;margin-left:4px;">x${item.qty}</span>
                 </div>
-                <span style="font-size:13px;font-weight:700;">Rp ${(itemTotal||0).toLocaleString('id-ID')}</span>
+                <span style="font-size:13px;font-weight:700;">${priceWithUSD(itemTotal||0)}</span>
             </div>`;
         }).join('');
     }
@@ -7692,7 +7728,10 @@ window.showProductDetail = function(id) {
                 <div style="background:linear-gradient(135deg,#FBF3DC,#ffffff);padding:20px;border-radius:16px;margin-bottom:12px;border:2px solid #D4AF37;">
                     <div style="display:flex;justify-content:space-between;align-items:center;">
                         <span style="color:#6B7280;font-size:14px;">Harga</span>
-                        <span style="font-size:32px;font-weight:800;color:#D4AF37;">Rp ${(price||0).toLocaleString('id-ID')}</span>
+                        <span style="font-size:32px;font-weight:800;color:#D4AF37;">${formatIDR(price||0)}</span>
+                    </div>
+                    <div style="text-align:right;margin-top:2px;">
+                        <span style="font-size:13px;font-weight:600;color:#9CA3AF;">≈ ${formatUSD(price||0)}</span>
                     </div>
                 </div>
                 ${calculateSGTReward(price) > 0 ? `<div style="background:linear-gradient(135deg,#FEF9EE,#FEF3C7);border:1.5px solid #F59E0B;border-radius:12px;padding:12px;margin-bottom:20px;display:flex;align-items:center;gap:10px;">
@@ -7736,14 +7775,17 @@ window.showOrderDetail = function(id) {
                 const iTotal = (parseFloat(item.price) || 0) * item.qty;
                 return `<div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #E5E7EB;">
                     <div><p style="font-weight:600;color:#1F2937;font-size:14px;">${item.name}</p><p style="font-size:12px;color:#6B7280;">x${item.qty}</p></div>
-                    <p style="font-weight:700;color:#D4AF37;">Rp ${(iTotal||0).toLocaleString('id-ID')}</p>
+                    <p style="font-weight:700;color:#D4AF37;">${priceWithUSD(iTotal||0)}</p>
                 </div>`;
             }).join('') || '<p style="color:#9CA3AF;">Tidak ada item</p>'}
         </div>
         <div style="background:linear-gradient(135deg,#FBF3DC,#ffffff);padding:20px;border-radius:16px;border:2px solid #D4AF37;margin-bottom:16px;">
             <div style="display:flex;justify-content:space-between;align-items:center;">
                 <span style="font-weight:700;color:#1F2937;">Total</span>
-                <span style="font-size:32px;font-weight:800;color:#D4AF37;">Rp ${(o.amount||0).toLocaleString('id-ID')}</span>
+                <span style="font-size:32px;font-weight:800;color:#D4AF37;">${formatIDR(o.amount||0)}</span>
+            </div>
+            <div style="text-align:right;margin-top:2px;">
+                <span style="font-size:13px;font-weight:600;color:#9CA3AF;">≈ ${formatUSD(o.amount||0)}</span>
             </div>
         </div>
         ${o.paymentMethod === 'bank_transfer' ? `<div style="background:#EFF6FF;border-radius:12px;padding:16px;margin-bottom:16px;border:1.5px solid #93C5FD;">
