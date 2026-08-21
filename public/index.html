@@ -377,25 +377,6 @@
             transform: scale(0.97);
         }
         
-        .btn-pi {
-            background: linear-gradient(135deg, var(--gold-light) 0%, var(--gold) 45%, var(--gold-dark) 100%);
-            color: #1A1508; 
-            font-weight: 700; 
-            border: none;
-            padding: 14px 20px; 
-            border-radius: var(--radius-sm); 
-            cursor: pointer;
-            width: 100%; 
-            font-size: 15px; 
-            transition: transform 0.25s var(--ease-smooth), box-shadow 0.25s var(--ease-smooth);
-            display: flex; 
-            align-items: center; 
-            justify-content: center;
-            gap: 10px;
-            box-shadow: var(--shadow-gold);
-        }
-        .btn-pi:active { transform: scale(0.97); }
-        
         .btn-admin {
             background: linear-gradient(135deg, #3A3226 0%, #1D1A14 100%);
             color: var(--gold-light); 
@@ -415,8 +396,8 @@
         }
         .btn-admin:active { transform: scale(0.97); }
         
-        /* Pi Card */
-        .pi-card { 
+        /* Wallet Summary Card */
+        .wallet-summary-card { 
             background: linear-gradient(135deg, #232014 0%, #0F0D0A 100%); 
             color: var(--gold-light); 
             padding: 24px; 
@@ -427,7 +408,7 @@
             box-shadow: 0 14px 32px rgba(0,0,0,0.45);
             border: 1px solid var(--border-gold);
         }
-        .pi-card::before {
+        .wallet-summary-card::before {
             content: ''; 
             position: absolute; 
             top: -50%; 
@@ -569,7 +550,7 @@
             border-radius: var(--radius-lg); 
             padding: 24px; 
             border-top: 3px solid var(--gold);
-            /* Hapus max-height + overflow-y pada content agar keyboard Pi tidak bug */
+            /* Hapus max-height + overflow-y pada content agar keyboard mobile tidak bug */
             margin: 40px auto 80px auto;
             box-shadow: 0 26px 52px rgba(0,0,0,0.5);
             pointer-events: auto !important;
@@ -946,10 +927,6 @@
             border-color: #D4AF37;
             transform: translateY(-2px);
             box-shadow: 0 8px 16px rgba(212, 175, 55, 0.14);
-        }
-        .login-option.pi {
-            border-color: #D4AF37;
-            background: linear-gradient(135deg, #FBF3DC 0%, #ffffff 100%);
         }
         .login-option.admin {
             border-color: #F59E0B;
@@ -1423,7 +1400,7 @@
                 <i class="fas fa-crown" style="color:var(--gold-light); font-size:16px;"></i>
                 <div>
                     <span style="font-size:13.5px; font-weight:600;">Selamat datang kembali, <span id="welcomeName" style="color:var(--gold-light);">Pioneer</span></span>
-                    <span style="font-size:11.5px; color:rgba(255,255,255,0.55); display:block; margin-top:1px;">Jelajahi produk pilihan dengan pembayaran Pi Anda</span>
+                    <span style="font-size:11.5px; color:rgba(255,255,255,0.55); display:block; margin-top:1px;">Jelajahi produk pilihan, bayar mudah via transfer bank</span>
                 </div>
             </div>
             
@@ -1508,7 +1485,7 @@
         <!-- PRODUCTS VIEW -->
         <div id="products-view" class="view">
             <h2 style="font-size:22px; font-weight:800; margin-bottom:16px; color:#1F2937;">
-                <i class="fas fa-shopping-bag" style="color:#D4AF37; margin-right:8px;"></i>Pasar Pi
+                <i class="fas fa-shopping-bag" style="color:#D4AF37; margin-right:8px;"></i>Semua Produk
             </h2>
             
             <div style="display:flex; gap:10px; margin-bottom:16px;">
@@ -1527,7 +1504,6 @@
                 <button class="tab" onclick="filterByCategory('Kesehatan', this)">Kesehatan</button>
                 <button class="tab" onclick="filterByCategory('Kuliner', this)">Kuliner</button>
                 <button class="tab" onclick="filterByCategory('Elektronik', this)">Elektronik</button>
-                <button class="tab" onclick="filterByCategory('Barang Mewah', this)"><i class="fas fa-gem" style="margin-right:4px;color:#7C3AED;"></i>Barang Mewah</button>
                 <button class="tab" onclick="filterByCategory('Lainnya', this)">Lainnya</button>
             </div>
 
@@ -3244,7 +3220,6 @@
                     <option value="Kesehatan">Kesehatan</option>
                     <option value="Kuliner">Kuliner</option>
                     <option value="Elektronik">Elektronik</option>
-                    <option value="Barang Mewah">Barang Mewah</option>
                     <option value="Lainnya">Lainnya</option>
                 </select>
             </div>
@@ -3616,12 +3591,11 @@ window.addEventListener('unhandledrejection', function(e) {
 //   }
 // }
 //
-// ⚠️  CATATAN PENTING:
-//     Pi Network menggunakan Pi UID (bukan Firebase UID) sebagai doc ID di koleksi users.
-//     User Pi login ke Firebase pakai signInAnonymously() sehingga Firebase UID berbeda
-//     dari Pi UID. Rules "request.auth.uid == userId" akan SELALU GAGAL untuk Pi user.
-//     Gunakan rules "if request.auth != null" untuk koleksi users agar bisa baca/tulis.
-//     Keamanan data user dijamin oleh validasi Pi SDK di server-side (/api/payments/*).
+// ✅  CATATAN:
+//     Auth sekarang pakai Firebase Email/Password, sehingga doc ID di koleksi
+//     'users' SAMA PERSIS dengan request.auth.uid. Rules "request.auth.uid == userId"
+//     sekarang benar-benar bisa dipakai untuk membatasi akses per-user secara aman
+//     (lihat contoh rules match /users/{userId} di atas).
 
 const firebaseConfig = {
     apiKey: "AIzaSyDNWOochfAyHjBYUNyq2IAYhA9p7Ie834M",
@@ -3796,74 +3770,16 @@ function logDebug(msg) {
 }
 
 // SGT TOKEN FUNCTIONS
-// Untuk user Pi asli (authType==='pi', punya accessToken terverifikasi):
-// SALDO SGT SESUNGGUHNYA hidup di ledger pusat (sgt_wallets di backend
-// ini sendiri) — bukan lagi di 'users/{uid}.sgtBalance'. Variabel lokal
-// `sgtBalance` tetap dipakai untuk logika game/UI real-time seperti biasa;
-// fungsi ini yang menyinkronkan SELISIHNYA ke ledger pusat.
-let _sgtLastSyncedBalance = null; // saldo terakhir yang sudah tersinkron ke pusat
-
 async function saveSGTData(forceFirestore = false, txId = null) {
     if (!currentUser) return;
 
-    // Selalu update localStorage sebagai cache cepat (tetap dipertahankan)
+    // Selalu update localStorage sebagai cache cepat
     try {
         localStorage.setItem('sgt_balance_' + currentUser.uid, sgtBalance.toString());
         localStorage.setItem('sgt_transactions_' + currentUser.uid, JSON.stringify(sgtTransactions));
         localStorage.setItem('sgt_rate', sgtRatePerRp.toString());
     } catch(e) {}
 
-    // ── Jalur BARU: user Pi asli → sinkron ke ledger pusat ──
-    if (currentUser.authType === 'pi' && currentUser.accessToken) {
-        // PENTING: kalau baseline belum pernah tersinkron (mis. fetch saldo awal
-        // saat app dibuka gagal/lambat), JANGAN anggap delta=0 — itu penyebab
-        // bug lama: bonus SGT (mis. cashback belanja) sudah nambah di layar
-        // tapi diam-diam tidak pernah terkirim ke ledger pusat. Ambil dulu
-        // saldo resmi dari server sebagai baseline sebelum menghitung delta.
-        if (_sgtLastSyncedBalance === null) {
-            try {
-                const baseRes = await fetch('/api/sgt/balance', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ accessToken: currentUser.accessToken })
-                });
-                const baseData = await baseRes.json();
-                _sgtLastSyncedBalance = baseData.success ? (baseData.sgtBalance || 0) : null;
-            } catch(e) {
-                logDebug('[SGT-sync] Gagal ambil baseline: ' + e.message);
-            }
-            if (_sgtLastSyncedBalance === null) {
-                // Masih belum tahu baseline sebenarnya — simpan ke antrian offline
-                // supaya reward ini dicoba lagi nanti, bukan hilang begitu saja.
-                enqueueSGTOffline({ uid: currentUser.uid, amount: sgtBalance, desc: 'sync_retry', ts: Date.now() });
-                return;
-            }
-        }
-        const delta = sgtBalance - _sgtLastSyncedBalance;
-        if (delta === 0) { window._lastSgtSyncDebug = { skipped: 'delta === 0', sgtBalance, _sgtLastSyncedBalance }; return; }
-        try {
-            const res = await fetch('/api/sgt/sync', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ accessToken: currentUser.accessToken, delta, txId })
-            });
-            const data = await res.json();
-            window._lastSgtSyncDebug = { httpStatus: res.status, sentDelta: delta, sentTxId: txId, response: data };
-            if (data.success) {
-                _sgtLastSyncedBalance = data.sgtBalance;
-                if (data.sgtBalance !== sgtBalance) { sgtBalance = data.sgtBalance; updateSGTUI(); }
-            } else {
-                logDebug('[SGT-sync] Gagal: ' + (data.error||'unknown'));
-                if (data.sgtBalance !== undefined) { sgtBalance = data.sgtBalance; _sgtLastSyncedBalance = data.sgtBalance; updateSGTUI(); }
-            }
-        } catch(e) {
-            window._lastSgtSyncDebug = { fetchError: e.message, sentDelta: delta, sentTxId: txId };
-            logDebug('[SGT-sync] Error jaringan: ' + e.message);
-        }
-        return; // TIDAK lagi menulis ke Firestore 'users/{uid}.sgtBalance' untuk user Pi
-    }
-
-    // ── Jalur LAMA (dipertahankan): login manual / admin, tanpa identitas Pi terverifikasi ──
     const docId = currentUser.uid;
     if (db && docId) {
         const _wasListening = sgtListenerActive;
@@ -3907,7 +3823,7 @@ async function loadSGTDataFixed() {
         if (rateSnap.exists() && rateSnap.data().mintRate) {
             sgtRatePerRp = rateSnap.data().mintRate;
             localStorage.setItem('sgt_rate', sgtRatePerRp.toString());
-            logDebug('[SGT-v3] Rate synced from Firestore: ' + sgtRatePerRp + ' SGT/Pi');
+            logDebug('[SGT-v3] Rate synced from Firestore: ' + sgtRatePerRp + ' SGT per Rp' + SGT_RP_UNIT);
         }
     } catch(e) {
         // Fallback ke localStorage jika offline
@@ -3919,36 +3835,7 @@ async function loadSGTDataFixed() {
     const username = currentUser.username;
     logDebug(`[SGT-v3] Loading SGT for uid=${uid}, username=${username}`);
 
-    // ── Jalur BARU: user Pi asli → ambil saldo dari ledger pusat ──
-    if (currentUser.authType === 'pi' && currentUser.accessToken) {
-        try {
-            const res = await fetch('/api/sgt/balance', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ accessToken: currentUser.accessToken })
-            });
-            const data = await res.json();
-            if (data.success) {
-                sgtBalance = data.sgtBalance || 0;
-                _sgtLastSyncedBalance = sgtBalance;
-                localStorage.setItem('sgt_balance_' + uid, sgtBalance.toString());
-                logDebug(`[SGT-v3] ✅ Loaded dari ledger pusat: ${sgtBalance} SGT`);
-                updateSGTUI();
-                return;
-            }
-        } catch(e) {
-            logDebug('[SGT-v3] Gagal ambil dari ledger pusat: ' + e.message);
-        }
-        // Kalau ledger pusat gagal dihubungi, fallback ke cache localStorage
-        // biar UI tidak kosong — TIDAK fallback ke Firestore 'users' lama
-        // (supaya tidak balik nampilin saldo lama yang sudah tidak relevan).
-        const cachedBal = localStorage.getItem('sgt_balance_' + uid);
-        sgtBalance = cachedBal ? (parseInt(cachedBal) || 0) : 0;
-        updateSGTUI();
-        return;
-    }
-
-    // ── Jalur LAMA (dipertahankan): login manual / admin ──
+    // ── Baca saldo SGT dari cache lokal & Firestore ──
     try {
         const cachedBal = localStorage.getItem('sgt_balance_' + uid);
         const cachedTx  = localStorage.getItem('sgt_transactions_' + uid);
@@ -3957,7 +3844,7 @@ async function loadSGTDataFixed() {
     } catch(e) {}
     
     try {
-        // Strategy 1: Baca dengan UID utama (PI UID)
+        // Strategy 1: Baca dengan UID utama (Firebase UID)
         if (db && uid) {
             const userRef = doc(db, 'users', uid);
             const userSnap = await getDoc(userRef);
@@ -4323,26 +4210,18 @@ async function flushSGTOfflineQueue() {
         const remaining = [];
         for (const entry of q) {
             let credited = false;
-            // Jalur utama: kredit SUNGGUHAN ke ledger pusat (sgt_wallets), idempotent
-            // lewat txId stabil supaya aman kalau flush ini sendiri gagal di tengah jalan.
-            if (currentUser.authType === 'pi' && currentUser.accessToken && entry.amount) {
-                try {
-                    const txId = 'mart_offline_' + (entry.uid || currentUser.uid) + '_' + entry.ts;
-                    const res = await fetch('/api/sgt/sync', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ accessToken: currentUser.accessToken, delta: entry.amount, txId })
-                    });
-                    const data = await res.json();
-                    if (data.success) {
-                        credited = true;
-                        _sgtLastSyncedBalance = data.sgtBalance;
-                        if (data.sgtBalance !== sgtBalance) { sgtBalance = data.sgtBalance; updateSGTUI(); }
-                        logDebug('[SGT Queue] ✅ Berhasil dikreditkan ke ledger pusat: ' + entry.amount + ' SGT');
-                    }
-                } catch(e) {
-                    logDebug('[SGT Queue] Gagal kredit ledger pusat, dicoba lagi nanti: ' + e.message);
+            // Retry simpan saldo SGT ke Firestore user
+            try {
+                if (db && entry.uid) {
+                    await setDoc(doc(db, 'users', entry.uid), {
+                        sgtBalance: increment(entry.amount || 0),
+                        sgtUpdatedAt: serverTimestamp()
+                    }, { merge: true });
+                    credited = true;
+                    logDebug('[SGT Queue] ✅ Berhasil dikreditkan: ' + entry.amount + ' SGT');
                 }
+            } catch(e) {
+                logDebug('[SGT Queue] Gagal kredit, dicoba lagi nanti: ' + e.message);
             }
             // Catatan audit non-kritis (tidak mengubah saldo) — dijaga untuk jejak riwayat
             if (db) {
@@ -4371,39 +4250,6 @@ if (typeof window !== 'undefined') {
         flushSGTOfflineQueue();
     });
 }
-
-// ===== KONVERSI MATA UANG: RUPIAH -> DOLAR AS (USD) =====
-// Kurs acuan (mid-market, per Agustus 2026). Bisa disesuaikan lewat window.setUsdRate().
-window.USD_IDR_RATE = parseFloat(localStorage.getItem('sagatama_usd_rate')) || 17830;
-
-window.setUsdRate = function(rate) {
-    const r = parseFloat(rate);
-    if (!r || r <= 0) return false;
-    window.USD_IDR_RATE = r;
-    try { localStorage.setItem('sagatama_usd_rate', String(r)); } catch(e) {}
-    return true;
-};
-
-// Format angka Rupiah murni, mis. "Rp 150.000"
-window.formatIDR = function(amount) {
-    return 'Rp ' + Math.round(amount || 0).toLocaleString('id-ID');
-};
-
-// Format nilai konversi Dolar murni, mis. "$8.41"
-window.formatUSD = function(amount) {
-    const usd = (amount || 0) / (window.USD_IDR_RATE || 17830);
-    return '$' + usd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-};
-
-// Untuk dipakai di dalam innerHTML template literal — Rupiah + estimasi USD dalam satu baris kecil
-window.priceWithUSD = function(amount) {
-    return formatIDR(amount) + ' <span style="font-size:0.72em;font-weight:600;color:#9CA3AF;">(~' + formatUSD(amount) + ')</span>';
-};
-
-// Untuk dipakai di elemen yang hanya menerima teks polos (innerText), mis. total pembayaran
-window.priceWithUSDText = function(amount) {
-    return formatIDR(amount) + ' (~' + formatUSD(amount) + ')';
-};
 
 // SGT_RP_UNIT = kelipatan Rupiah untuk 1x rate SGT (default: tiap Rp10.000 belanja)
 const SGT_RP_UNIT = 10000;
@@ -4643,7 +4489,7 @@ window._real_.distributeSGTManual = async function() {
         const userDoc = usersSnap.docs[0];
         const userData = userDoc.data();
         
-        // 🔥 KRITIS: Gunakan uid field jika ada (PI UID), bukan document ID!
+        // 🔥 KRITIS: Gunakan uid field jika ada, bukan document ID!
         const docId = userDoc.id;
         const targetUid = userData.uid || docId;
         
@@ -4840,7 +4686,7 @@ window.loadMintRateFromFirestore = async function loadMintRateFromFirestore() {
             sgtRatePerRp = snap.data().mintRate;
             const el = document.getElementById('currentMintRateDisplay');
             if (el) el.textContent = sgtRatePerRp;
-            logDebug('Mint rate loaded: ' + sgtRatePerRp + ' SGT/Pi');
+            logDebug('Mint rate loaded: ' + sgtRatePerRp + ' SGT per Rp' + SGT_RP_UNIT);
         }
     } catch(e) { logDebug('loadMintRateFromFirestore error: ' + e.message); }
 };
@@ -4903,16 +4749,6 @@ function listenUserSGTBalance(userId) {
 function listenUserSGTBalanceFixed(userId) {
     if (currentUser?.role === 'admin' || currentUser?.username === 'sagatama_admin') {
         logDebug('Skip SGT listener: admin session');
-        return null;
-    }
-    // FIX: user Pi asli (authType==='pi') saldo SGT sesungguhnya sekarang hidup
-    // di ledger pusat (sgt_wallets), BUKAN lagi di field users/{uid}.sgtBalance.
-    // Field lama itu sudah tidak pernah ditulis lagi sejak migrasi, jadi kalau
-    // listener ini tetap aktif, begitu Firestore mengirim snapshot dari dokumen
-    // users/{uid} (nilai lama/beku), sgtBalance akan ketimpa balik ke angka lama
-    // — inilah penyebab bonus SGT dari belanja muncul sebentar lalu hilang.
-    if (currentUser?.authType === 'pi' && currentUser?.accessToken) {
-        logDebug('Skip SGT listener lama: user Pi pakai ledger pusat (sgt_wallets)');
         return null;
     }
     if (!userId || !db) return;
@@ -5286,7 +5122,7 @@ async function init() {
     if (!currentUser && loading) loading.style.display = 'flex';
 
     try {
-        // Firebase auth (email/password) — tidak ada lagi Pi SDK
+        // Firebase auth (email/password)
         const [firebaseOk] = await Promise.allSettled([
             initFirebase()
         ]);
@@ -5378,7 +5214,7 @@ async function verifyUserSession() {
     }
 }
 
-// PI SDK ROBUST INITIALIZATION v3 (dihapus — tidak dipakai lagi, tinggal placeholder no-op
+// (delay helper — dipertahankan untuk dipakai fungsi lain, tinggal placeholder no-op
 // agar pemanggilan lama yang mungkin tersisa tidak error)
 function delay(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
@@ -5631,7 +5467,7 @@ function loadDataFromFirebase() {
     }
 
     try {
-        // KRITIS: request.auth.uid di Firestore = Firebase UID (bukan Pi UID)
+        // KRITIS: request.auth.uid di Firestore = Firebase UID
         // Query WAJIB menggunakan firebaseUid agar cocok dengan rule Firestore
         let ordersQuery;
         if (checkAdmin()) {
@@ -5742,17 +5578,6 @@ function loadDataFromFirebase() {
         // Load badge sosial (beasiswa & bansos pending)
         updateAdminSosialBadge();
     }
-}
-
-// PERBAIKAN: Helper untuk Pi SDK timeout
-// Mengatasi error "Messaging promise with id X timed out"
-async function withPiTimeout(promise, timeoutMs = 30000, operationName = 'Pi operation') {
-    return Promise.race([
-        promise,
-        new Promise((_, reject) => 
-            setTimeout(() => reject(new Error(`${operationName} timeout setelah ${timeoutMs/1000} detik`)), timeoutMs)
-        )
-    ]);
 }
 
 // AUTHENTICATION
@@ -6449,10 +6274,10 @@ window.toggleWallet = function() {
 window.openModal = function(modalId) {
     const modalEl = document.getElementById(modalId);
     if (!modalEl) return;
-    // Scroll modal ke atas sebelum tampil (Pi Browser fix)
+    // Scroll modal ke atas sebelum tampil (fix WebView mobile)
     modalEl.scrollTop = 0;
     modalEl.classList.add('active');
-    // Pi Browser fix: enable semua input + hapus atribut yang menghalangi
+    // Fix WebView mobile: enable semua input + hapus atribut yang menghalangi
     const enableInputs = function() {
         modalEl.querySelectorAll('input, textarea, select').forEach(function(el) {
             el.style.pointerEvents = 'auto';
@@ -6504,7 +6329,7 @@ function updateUI() {
                 <i class="fas fa-crown" style="color:var(--gold-light); font-size:16px;"></i>
                 <div>
                     <span style="font-size:13.5px; font-weight:600;">Selamat datang kembali, <span style="color:var(--gold-light);">${currentUser.username}</span></span>
-                    <span style="font-size:11.5px; color:rgba(255,255,255,0.55); display:block; margin-top:1px;">${isAdmin ? 'Dashboard Admin siap digunakan' : 'Jelajahi produk pilihan dengan pembayaran Pi Anda'}</span>
+                    <span style="font-size:11.5px; color:rgba(255,255,255,0.55); display:block; margin-top:1px;">${isAdmin ? 'Dashboard Admin siap digunakan' : 'Jelajahi produk pilihan, bayar mudah via transfer bank'}</span>
                 </div>
             `;
         }
@@ -6553,7 +6378,7 @@ function renderProducts() {
             <div class="pc-body">
                 <span class="pc-cat-badge">${p.category || 'Lainnya'}</span>
                 <h4 class="pc-name">${p.name}</h4>
-                <p class="pc-price">${priceWithUSD(price||0)}</p>
+                <p class="pc-price">Rp ${(price||0).toLocaleString('id-ID')}</p>
                 ${!isOutOfStock ? `<span class="pc-stock-pill">Stok: ${stockNum}</span>` : ''}
                 <button onclick="event.stopPropagation(); addToCart('${p.id}')" class="pc-add-btn" ${isOutOfStock ? 'disabled' : ''} aria-label="Tambah ke keranjang">
                     <i class="fas ${isOutOfStock ? 'fa-ban' : 'fa-plus'}"></i> ${isOutOfStock ? 'Habis' : 'Tambah'}
@@ -6582,7 +6407,7 @@ function renderFeaturedProducts() {
             </div>
             <div class="pc-body">
                 <h4 class="pc-name" style="min-height:auto;-webkit-line-clamp:1;">${p.name}</h4>
-                <p class="pc-price">${priceWithUSD(price||0)}</p>
+                <p class="pc-price">Rp ${(price||0).toLocaleString('id-ID')}</p>
                 <button onclick="event.stopPropagation(); addToCart('${p.id}')" class="pc-add-btn" aria-label="Tambah ke keranjang">
                     <i class="fas fa-plus"></i> Tambah
                 </button>
@@ -6598,8 +6423,7 @@ function renderHomeCategories() {
         {name:'Herbal',icon:'🌿',color:'#10B981'},{name:'Sembako',icon:'🍚',color:'#F59E0B'},
         {name:'Literasi',icon:'📚',color:'#3B82F6'},{name:'Busana',icon:'👕',color:'#EC4899'},
         {name:'Kesehatan',icon:'💊',color:'#EF4444'},{name:'Kuliner',icon:'🍜',color:'#D4AF37'},
-        {name:'Elektronik',icon:'📱',color:'#06B6D4'},{name:'Barang Mewah',icon:'💎',color:'#7C3AED'},
-        {name:'Lainnya',icon:'📦',color:'#6B7280'}
+        {name:'Elektronik',icon:'📱',color:'#06B6D4'},{name:'Lainnya',icon:'📦',color:'#6B7280'}
     ];
     container.innerHTML = categories.map(c => `
         <div onclick="switchView('products'); setTimeout(() => filterByCategory('${c.name}'), 100)"
@@ -6613,9 +6437,6 @@ function renderWallet() {
     if (currentUser) loadSGTDataFixed();
     const historyContainer = document.getElementById('transactionHistory');
     if (!historyContainer) return;
-
-    const walletBalance = document.getElementById('walletPiBalance');
-    if (walletBalance) walletBalance.innerText = 'Rp --';
 
     const _fbUid = currentUser?.firebaseUid || auth?.currentUser?.uid;
     const myTransactions = orders
@@ -6631,7 +6452,7 @@ function renderWallet() {
     if (myTransactions.length === 0) {
         historyContainer.innerHTML = `<div class="empty-state" style="padding:40px 20px;text-align:center;">
             <i class="fas fa-receipt" style="font-size:48px;margin-bottom:16px;color:#D1D5DB;"></i>
-            <p style="color:#6B7280;font-weight:600;">Belum ada transaksi Pi</p></div>`;
+            <p style="color:#6B7280;font-weight:600;">Belum ada transaksi</p></div>`;
     } else {
         historyContainer.innerHTML = myTransactions.map(t => {
             const sgtEarned = t.sgtEarned || calculateSGTReward(t.amount || 0);
@@ -6777,7 +6598,7 @@ function renderCart() {
             <img src="${safeImg(item.image,'thumb')}" style="width:80px;height:80px;object-fit:cover;border-radius:12px;" onerror="onImgError(this,'thumb')">
             <div style="flex:1;">
                 <h4 style="font-weight:700;color:#1F2937;font-size:14px;margin-bottom:4px;">${item.name}</h4>
-                <p style="font-size:13px;color:#D4AF37;font-weight:700;">${priceWithUSD(itemTotalPi||0)}</p>
+                <p style="font-size:13px;color:#D4AF37;font-weight:700;">Rp ${(itemTotalPi||0).toLocaleString('id-ID')}</p>
                 ${itemSGT > 0 ? `<p style="font-size:11px;color:#D97706;font-weight:700;margin-top:2px;">+${itemSGT} SGT reward</p>` : ''}
                 <div style="display:flex;align-items:center;gap:8px;margin-top:8px;">
                     <button onclick="updateQty(${idx},-1)" style="width:28px;height:28px;border-radius:8px;border:1px solid #E5E7EB;background:white;cursor:pointer;"><i class="fas fa-minus" style="font-size:10px;"></i></button>
@@ -6800,7 +6621,7 @@ function updateCartSummary() {
     const totalEl = document.getElementById('cartTotalPi');
     const countEl = document.getElementById('cartItemCount');
     const sgtEl = document.getElementById('sgtRewardPreview');
-    if (totalEl) totalEl.innerText = priceWithUSDText(totalPi||0);
+    if (totalEl) totalEl.innerText = 'Rp ' + (totalPi||0).toLocaleString('id-ID');
     if (countEl) countEl.innerText = itemCount + ' item';
     if (sgtEl) sgtEl.innerText = '+' + totalSGT + ' SGT';
 }
@@ -7352,7 +7173,7 @@ function renderAdminAnalytics() {
             <div style="width:36px;height:36px;background:linear-gradient(135deg,#D4AF37,#A9821E);color:white;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;">${idx+1}</div>
             <div style="flex:1;min-width:0;">
                 <p style="font-weight:700;color:#1F2937;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${name}</p>
-                <p style="font-size:11px;color:#6B7280;">${data.qty} terjual - ${data.revenue.toFixed(8)} Pi</p>
+                <p style="font-size:11px;color:#6B7280;">${data.qty} terjual - Rp${(data.revenue||0).toLocaleString('id-ID')}</p>
             </div>
         </div>`).join('');
 }
@@ -7485,7 +7306,7 @@ function renderSalesChart() {
                     yAxisID: 'y'
                 },
                 {
-                    label: 'Revenue (Pi)',
+                    label: 'Revenue (Rp)',
                     data: revenueData,
                     borderColor: '#10B981',
                     backgroundColor: 'rgba(16, 185, 129, 0.1)',
@@ -7549,7 +7370,7 @@ function renderSalesChart() {
                     ticks: { 
                         font: { size: 10 },
                         callback: function(value) {
-                            return value.toFixed(2) + ' Pi';
+                            return 'Rp' + value.toLocaleString('id-ID');
                         }
                     },
                     title: {
@@ -7626,7 +7447,7 @@ window.openPayment = function() {
     if (proofWrap) proofWrap.style.display = 'none';
     paymentProofDataUrl = null;
 
-    if (amountEl) amountEl.innerText = priceWithUSDText(totalAmount||0);
+    if (amountEl) amountEl.innerText = 'Rp ' + (totalAmount||0).toLocaleString('id-ID');
     if (sgtEl) sgtEl.innerText = '+' + sgtReward + ' SGT';
     if (bankInfoEl) {
         bankInfoEl.innerHTML = `<p><strong>Bank ${BANK_INFO.bankName}</strong> — ${BANK_INFO.accountNumber}<br>a.n. ${BANK_INFO.accountHolder}</p>`;
@@ -7639,7 +7460,7 @@ window.openPayment = function() {
                     <span style="font-size:13px;color:#374151;">${item.name}</span>
                     <span style="font-size:11px;color:#9CA3AF;margin-left:4px;">x${item.qty}</span>
                 </div>
-                <span style="font-size:13px;font-weight:700;">${priceWithUSD(itemTotal||0)}</span>
+                <span style="font-size:13px;font-weight:700;">Rp ${(itemTotal||0).toLocaleString('id-ID')}</span>
             </div>`;
         }).join('');
     }
@@ -7728,10 +7549,7 @@ window.showProductDetail = function(id) {
                 <div style="background:linear-gradient(135deg,#FBF3DC,#ffffff);padding:20px;border-radius:16px;margin-bottom:12px;border:2px solid #D4AF37;">
                     <div style="display:flex;justify-content:space-between;align-items:center;">
                         <span style="color:#6B7280;font-size:14px;">Harga</span>
-                        <span style="font-size:32px;font-weight:800;color:#D4AF37;">${formatIDR(price||0)}</span>
-                    </div>
-                    <div style="text-align:right;margin-top:2px;">
-                        <span style="font-size:13px;font-weight:600;color:#9CA3AF;">≈ ${formatUSD(price||0)}</span>
+                        <span style="font-size:32px;font-weight:800;color:#D4AF37;">Rp ${(price||0).toLocaleString('id-ID')}</span>
                     </div>
                 </div>
                 ${calculateSGTReward(price) > 0 ? `<div style="background:linear-gradient(135deg,#FEF9EE,#FEF3C7);border:1.5px solid #F59E0B;border-radius:12px;padding:12px;margin-bottom:20px;display:flex;align-items:center;gap:10px;">
@@ -7775,17 +7593,14 @@ window.showOrderDetail = function(id) {
                 const iTotal = (parseFloat(item.price) || 0) * item.qty;
                 return `<div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #E5E7EB;">
                     <div><p style="font-weight:600;color:#1F2937;font-size:14px;">${item.name}</p><p style="font-size:12px;color:#6B7280;">x${item.qty}</p></div>
-                    <p style="font-weight:700;color:#D4AF37;">${priceWithUSD(iTotal||0)}</p>
+                    <p style="font-weight:700;color:#D4AF37;">Rp ${(iTotal||0).toLocaleString('id-ID')}</p>
                 </div>`;
             }).join('') || '<p style="color:#9CA3AF;">Tidak ada item</p>'}
         </div>
         <div style="background:linear-gradient(135deg,#FBF3DC,#ffffff);padding:20px;border-radius:16px;border:2px solid #D4AF37;margin-bottom:16px;">
             <div style="display:flex;justify-content:space-between;align-items:center;">
                 <span style="font-weight:700;color:#1F2937;">Total</span>
-                <span style="font-size:32px;font-weight:800;color:#D4AF37;">${formatIDR(o.amount||0)}</span>
-            </div>
-            <div style="text-align:right;margin-top:2px;">
-                <span style="font-size:13px;font-weight:600;color:#9CA3AF;">≈ ${formatUSD(o.amount||0)}</span>
+                <span style="font-size:32px;font-weight:800;color:#D4AF37;">Rp ${(o.amount||0).toLocaleString('id-ID')}</span>
             </div>
         </div>
         ${o.paymentMethod === 'bank_transfer' ? `<div style="background:#EFF6FF;border-radius:12px;padding:16px;margin-bottom:16px;border:1.5px solid #93C5FD;">
@@ -8060,7 +7875,7 @@ document.addEventListener('DOMContentLoaded', () => {
     logDebug("DOM Loaded - Starting app...");
     init();
 
-    // Kalau setelah 8 detik loading masih muter (misal di laptop tanpa Pi Browser),
+    // Kalau setelah 8 detik loading masih muter (misal koneksi lambat),
     // paksa sembunyikan overlay dan buka modal login
     setTimeout(() => {
         const loading = document.getElementById('loadingOverlay');
@@ -8391,7 +8206,7 @@ window.submitBeasiswa = async function() {
     const sgtNeeded = { sd:200, smp:350, sma:500, pt:1000 }[tingkat] || 200;
     try {
         if (!db) throw new Error('Database belum siap, coba refresh halaman.');
-        // Pastikan Firebase Auth aktif (Pi login tidak otomatis login Firebase)
+        // Pastikan Firebase Auth aktif
         if (auth && !auth.currentUser) {
             try { await signInAnonymously(auth); }
             catch (authErr) { logDebug('Anon auth skip (non-fatal): ' + authErr.message); }
@@ -9571,8 +9386,8 @@ window._getSgtBalance = function() { return sgtBalance || 0; };
 // Additional functions exposed to window (outside module gate)
 window.updateMintRate = async function() {
     const val = parseInt(document.getElementById('newMintRate')?.value);
-    if (!val || val < 1 || val > 10000) { showToast('Rate harus antara 1–10000 SGT/Pi', 'error'); return; }
-    if (!confirm(`Ubah rate mint menjadi ${val} SGT per Pi? Semua transaksi baru akan menggunakan rate ini.`)) return;
+    if (isNaN(val) || val < 0 || val > 10000) { showToast('Rate harus antara 0–10000 SGT per Rp10.000', 'error'); return; }
+    if (!confirm(`Ubah rate mint menjadi ${val} SGT per Rp${SGT_RP_UNIT.toLocaleString('id-ID')}? Semua transaksi baru akan menggunakan rate ini.`)) return;
     sgtRatePerRp = val;
     // Save to Firestore
     try {
@@ -9590,7 +9405,7 @@ window.updateMintRate = async function() {
     // Update input di admin modal agar sinkron
     const rateInput = document.getElementById('sgtAdminRate');
     if (rateInput) rateInput.value = val;
-    showToast(`✅ Rate mint diubah ke ${val} SGT/Pi`, 'success');
+    showToast(`✅ Rate mint diubah ke ${val} SGT / Rp${SGT_RP_UNIT.toLocaleString('id-ID')}`, 'success');
     logDebug('Mint rate updated to: ' + val);
 };
 
