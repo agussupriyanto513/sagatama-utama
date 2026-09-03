@@ -451,7 +451,9 @@
         .product-card .pc-media img {
             width: 100%;
             height: 100%;
+            max-width: 100%;
             object-fit: cover;
+            object-position: center;
             display: block;
             transition: opacity 0.3s ease;
         }
@@ -1475,7 +1477,7 @@
                 <h3 style="font-weight:800; color:#1F2937; font-size:16px;">Produk Unggulan</h3>
                 <button onclick="switchView('products')" style="color:#D4AF37; font-size:12px; font-weight:700; border:none; background:none; cursor:pointer;">Lihat Semua <i class="fas fa-arrow-right" style="margin-left:4px;"></i></button>
             </div>
-            <div id="featuredProducts" style="display:grid; grid-template-columns:repeat(2, 1fr); gap:22px 16px;">
+            <div id="featuredProducts" class="product-grid">
                 <!-- Loading skeleton -->
                 <div class="skeleton" style="height:200px; border-radius:16px;"></div>
                 <div class="skeleton" style="height:200px; border-radius:16px;"></div>
